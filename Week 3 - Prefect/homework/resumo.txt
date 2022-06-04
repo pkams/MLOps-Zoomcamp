@@ -1,0 +1,38 @@
+Q1. Converting the script to a Prefect flow
+
+We want to bring this to workflow orchestration to add observability around it. The main function will be converted to a flow and the other functions will be tasks. After adding all of the decorators, there is actually one task that you will need to call .result() for inside the flow to get it to work. Which task is this?
+
+read_data
+prepare_features
+train_model [X]
+run_model
+
+Q2. Parameterizing the flow
+
+Download the relevant files needed to run the main flow if date is 2021-08-15.
+
+For example:
+
+main(date="2021-08-15")
+By setting up the logger from the previous step, we should see some logs about our training job. What is the validation MSE when running the flow with this date?
+
+Note you need to download the relevant files to run. Part of this question is understanding which files the flow should be looking for.
+
+The valition MSE is:
+
+[X]11.637
+11.837
+12.037
+12.237
+
+Q3. Saving the model and artifacts
+
+What is the file size of the DictVectorizer that we trained when the date is 2021-08-15?
+
+[X]13,000 bytes
+23,000 bytes
+33,000 bytes
+43,000 bytes
+
+You can bring up the Orion UI and see the work you've been doing. If you are using local Orion, you can start the server with:
+>> prefect orion start
