@@ -36,3 +36,68 @@ What is the file size of the DictVectorizer that we trained when the date is 202
 
 You can bring up the Orion UI and see the work you've been doing. If you are using local Orion, you can start the server with:
 >> prefect orion start
+
+Q4. Creating a deployment with a CronSchedule
+
+What is the Cron expression to run a flow at 9 AM every 15th of the month?
+
+* * 15 9 0
+9 15 * * *
+[X] 0 9 15 * *
+0 15 9 1 *
+Hint: there are many Cron to English tools. Try looking for one to help you.
+
+Create a deployment with prefect deployment create after you write your DeploymentSpec
+
+Q5. Viewing the Deployment
+
+How many flow runs are scheduled by Prefect in advanced? You should not be counting manually. There is a number of upcoming runs on the top right of the dashboard.
+
+0
+[X]3
+10
+25
+
+Q6. Creating a work-queue
+
+In order to run this flow, you will need an agent and a work queue. Because we scheduled our flow or every month, it won't really get picked up by an agent. For this exercise, create a work-queue from the UI and view it using the CLI.
+
+For all CLI commands with Prefect, you can use --help to get more information.
+
+For example,
+
+prefect --help
+prefect work-queue --help
+What is the command to view the available work-queues?
+
+prefect work-queue inspect
+prefect work-queue ls
+prefect work-queue preview
+prefect work-queue list
+
+In the UI go to work quere, choose a name, tag and SUBPROCESS. Now go to create work queue and copy the code:
+prefect agent start ef22cf20-ddfb-4b8d-8ed2-7757e632a179
+prefect work-queue preview ef22cf20-ddfb-4b8d-8ed2-7757e632a179 --hours (10000 pra pegar lá na frente pro ex)
+
+and start agent:
+prefect agent start 6bbd7121-b145-4842-8953-6eca130d6f77
+
+===
+
+Set storage: prefect storage create > 3 (local storage)
+Prefect deployment: prefect deployment create <deploymentspec_script>
+Obs: for local deployment use "flow_runner=SubprocessFlowRunner()" in the deploymentspec
+
+Start server: prefect orion start
+
+prefect agent start e35fae12-c501-453f-9c12-0341e13bf325
+
+PREFECT CLOUD: https://orion-docs.prefect.io/ui/cloud-getting-started/
+Create account
+Create workspace
+Create API Key (in the profile)
+prefect cloud login --key <key>
+prefect config set PREFECT_API_URL=<workspace_url>
+or
+$ prefect config set PREFECT_API_URL="https://beta.prefect.io/api/accounts/[ACCOUNT-ID]/workspaces/[WORKSPACE-ID]"
+$ prefect config set PREFECT_API_KEY="[API-KEY]"

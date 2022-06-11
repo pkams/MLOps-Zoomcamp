@@ -11,8 +11,9 @@ mlflow = "*"
 hyperopt = "*"
 pyarrow = "*"
 xgboost = "*"
+prefect = "==2.0b6"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"
