@@ -1,0 +1,12 @@
+Documentar esse video:
+
+https://www.youtube.com/watch?v=ekT_JW213Tc&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=35
+
+===
+
+Fazer container com prefect, mlflow funcionando juntos?
+
+===
+
+Como passar datas váriaveis no prefect?
+

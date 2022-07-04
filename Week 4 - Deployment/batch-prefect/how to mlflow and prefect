@@ -1,0 +1,19 @@
+Rodar mlflow com default artifact root + backend store
+
+# Verificar esse %cd%
+mlflow ui --default-artifact-root %cd%/mlruns --backend-store-uri sqlite:///mlflow.db
+
+Rodar prefect
+
+prefect orion start # server
+
+prefect deployment create <script com deployment>
+
+prefect storage create >> 3 (local) >> <inserir pasta>
+
+Criar work queue
+
+prefect start agent <work queue id>
+
+Podemos rodar manualmente no server >> deployment
+
