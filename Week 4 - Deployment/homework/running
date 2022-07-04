@@ -1,0 +1,28 @@
+docker build -t predict_file .
+
+docker run -d -p 80:80 yourusername/example-node-app
+docker run -d predict_file <args>
+
+docker run -d predict_file --year 2021 --month 04
+
+docker run predict_file --year 2021 --month 04
+
+===
+
+To run and show results subtract the -d
+
+===================================================
+
+Final:
+docker build -t predict_file .
+docker run --rm -v /output:/output predict_file --year 2021 --month 04 --save True
+
+--rm create and remove
+-v mirror the volume outside container
+--year and --month and --save internal python arguments
+
+===
+
+# How to run with volume: docker run --rm -v C:/Users/Usuario/PycharmProjects/MLOps-Zoomcamp-Deployment/homework/output:/app/output predict_test --year 2021 --month 04 --save True
+# Using linux (or powershell): we can use ${pwd} to get the actual directory: docker run --rm -v ${pwd}/output:/app/output predict_test --year 2021 --month 04 --save True
+# Using windows: we can use %cd% to get the actual directory: docker run --rm -v %cd%/output:/app/output predict_test --year 2021 --month 04 --save True
