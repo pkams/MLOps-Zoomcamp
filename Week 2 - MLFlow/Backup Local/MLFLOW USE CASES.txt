@@ -1,0 +1,239 @@
+https://www.youtube.com/watch?v=1ykg4YmbFVA&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK
+
+- Single data scientist participating in a ML competition (just use MLFlow as result table, without saving models and files)
+
+- Cross functional tem with one data scientist working on a ML Model (running tracking server locally)
+
+- Multiple data scientist working on multiple ml models (running remote tracking server)
+
+=================================================================================
+
+Configuring MLFlow
+
+- Backend Store
+	local filesystem
+	SQLAlchemy compatible DB (sqlite)
+- Artifacts Store
+	local filesystem
+	remote (S3 bucket)
+- Tracking Server
+	no tracking server
+	localhost
+	remote
+
+=================================================================================
+
+First scenario:
+- Tracking server: no
+- Backend store: local filesystem
+- Artifacts store: local filesystem
+
+import mlflow
+
+mlflow.get_tracking_uri()
+
+mlflow.list_experiments()
+
+import libs
+
+with mlflow.start_run():
+	x,y = ...
+	params = {...}
+	mlflow.log_params(params)
+
+	model = Model(**params).fit()
+	...
+	mlflow.log_metric("Acc", accuracy_score(y, y_pred))
+
+	mlflow.sklearn.log_model(model, artifact_path="my_models")
+	print("Default artifacts URI: '{mlflow.get_artifact_url()}'")
+
+mlflow.list_experiments()
+
+===
+
+Each run will save the artifacts and metrics in a folder in /mlruns.
+
+===
+
+from mlflow.tracking import MlflowClient
+client = MlflowClient()
+
+from mlflow.exceptions import MlflowException
+try: 
+	client.list_registered_models()
+except MlflowException:
+	print('Its not possible to acess model registry :(')
+
+===
+
+Because we are using local filesystem with no backend.
+
+We can still acess infos using MLFLOW UI.
+
+>> cd to the experiment folder
+>> mlflow ui
+
+====================================================================================
+
+Second scenario:
+- Tracking server: yes, local server
+- Backend store: sqlite database
+- Artifacts store: local filesystem
+
+>> mlflow server --backend-store-uri sqlite:///backend.db --default-artifact-root ./artifacts_local
+or
+>> mlflow ui --backend-store-uri sqlite:///backend.db
+
+import mlflow
+
+mlflow.set_tracking_uri('http:')
+
+mlflow.get_tracking_uri()
+
+mlflow.list_experiments()
+
+import libs
+
+with mlflow.start_run():
+	x,y = ...
+	params = {...}
+	mlflow.log_params(params)
+
+	model = Model(**params).fit()
+	...
+	mlflow.log_metric("Acc", accuracy_score(y, y_pred))
+
+	mlflow.sklearn.log_model(model, artifact_path="my_models")
+	print("Default artifacts URI: '{mlflow.get_artifact_url()}'")
+
+mlflow.list_experiments()
+
+===
+
+Same process
+
+===
+
+We can acess model registry
+
+from mlflow.tracking import MlflowClient
+client = MlflowClient()
+
+client.list_registered_models()
+
+run_id = client.list_run_infos(experiment_id='1')[0].run_id
+mlflow.register_model(
+	model_uri=f"runs:/{run_id}/models",
+	name='iris-classifier'
+)
+
+====================================================================================
+
+Thid scenario:
+- Tracking server: yes, remote server (EC2)
+- Backend store: postgresql database
+- Artifacts store: S3 Bucket
+
+# Create instance EC2
+# Create key pair (RSA, .pem)
+# Configure the security group > inbound rules > new rule >> custom tcp > 5000 > anywhere 
+# Create S3 Bucket
+# Create postgresql >> AWS RDS >> starndard >> postgresql >> template:free tier >> set name >> username >> auto generate password >> aditional congiguration: database options: initial database name: mlflow_db >> resto default
+**Quando estiver criando database poderemos ver o password generated.**
+# Configure RDS Security group >> new rule >> Type: PostgreSQL >> select the security group configured in EC2
+# Connect in the AWS instance (EC2 instance connect or SSH client)
+# Run:
+>> sudo yum update
+>> pip3 install mlflow boto3 psycopg2-binary
+>> aws configure #aws credentials here, the rest can be default setted (just press enter)
+>> mlflow server -h 0.0.0.0 -p 5000 --backend-store-uri postgresql://DB_USER:DB_PASSWORD@DB_ENDPOINT:5432/DB_NAME --default-artifact-root s3://S3_BUCKET_NAME
+
+Before launching server verify if the instance can acess s3 bucket: aws s3 ls
+
+To acess:
+<PUBLICDNSOFEC2>:5000
+
+import mlflow
+import os
+
+os.environ['AWS_PROFILE'] = "" # my aws profile -> WE NEED THAT TO UPLOAD TO AWS
+
+TRACKING_SERVER_HOST = "" #public DNS of the EC2 instance
+
+mlflow.set_tracking_uri("http://{TRACKING_SERVER_HOST}:5000")
+
+mlflow.get_tracking_uri()
+
+mlflow.list_experiments()
+
+import libs
+
+with mlflow.start_run():
+	x,y = ...
+	params = {...}
+	mlflow.log_params(params)
+
+	model = Model(**params).fit()
+	...
+	mlflow.log_metric("Acc", accuracy_score(y, y_pred))
+
+	mlflow.sklearn.log_model(model, artifact_path="my_models")
+	print("Default artifacts URI: '{mlflow.get_artifact_url()}'")
+
+mlflow.list_experiments()
+
+===
+
+Same process
+
+===
+
+We can acess model registry
+
+from mlflow.tracking import MlflowClient
+client = MlflowClient()
+
+client.list_registered_models()
+
+run_id = client.list_run_infos(experiment_id='1')[0].run_id
+mlflow.register_model(
+	model_uri=f"runs:/{run_id}/models",
+	name='iris-classifier'
+)
+
+=== 
+
+Everything will run but that time in the remote server!
+
+====================================================================================
+
+Remote server:
+- Share experiments with other data scientists
+- Collaborate with others to build and deploy models
+- Give more visibility of the data scient efforts
+
+Issues:
+- Security: Restricty acess (acess trough VPN)
+- Scalability: Check Deploy MLFlow on AWS Fargate / Check MLFlow at Company Scale
+- Isolation: Define standard for naming experiments models and set of default tags. Restrict acess to artifacts (use s3 buckets living in different aws accounts)
+
+===
+
+MLFLOW Limitations
+- Authentication and Users: OpenSource MLFlow doenst provide. We need to use something like pay version of databricks (that includes mlflow).
+
+- Data versioning: MLFlow doenst provide a built-in solution for that but there are a few ways to deal with this limitation.
+
+- Model/Data Monitoring and Alerting: Outside of scope of MLFlow and currently there are more suitable tools for doing this.
+
+===
+
+MLFlow alternatives
+- Neptune
+- Comet
+- Weight and Biases
+- and many more...
+
+
+

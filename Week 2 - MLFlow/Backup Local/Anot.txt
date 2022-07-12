@@ -1,0 +1,376 @@
+ML Experiment: Process of building a model.
+Experiment run: Each trial in a ML experiment.
+
+===
+
+Experiment Tracking - Process of keeping track of all the RELEVANT INFORMATION from an ML Experiment, which incluses:
+
+- Source code
+- Environment
+- Data
+- Model
+- Hyperparameters
+- Metrics
+- ... 
+
+===
+
+Why use Experiment Tracking?
+- Reproducibility
+- Organization
+- Optimization
+
+===
+
+Experiment Tracking History
+- Spreeadsheet 
+Error prone
+No standard format
+Visibility and Colaboration
+
+===
+
+Alternative: ML FLOW
+Open source platform for machine learning lifecycle
+It's a python package that can be installed with pip, contains four modules:
+
+- Tracking
+- Models
+- Model Registry
+- Projects (Out of the scope in the course)
+
+========================================================================
+
+MLFlow tracking allows you to organize experiments into runs, keeping track of:
+- Parameters
+- Metrics
+- Metadata
+- Artifacts
+- Models
+
+Along with this, MLFlow automatically logs extra information about the run:
+- Source code
+- Version of the code (git commit)
+- Start and end time
+- Author
+
+===
+
+1. How to install?
+
+pip install mlflow
+>> mlflow #show the possibles commands
+
+Lauch MLFlow web server locally:
+>> mlflow ui
+
+MLFlow 
+
+===
+
+2. How to set database and use model registry?
+
+To use model registry (Models tab) you need to run MLFlow with a backend database.
+
+>> mlflow ui --backend-store-uri sqlite:///mlflow.db
+
+===
+
+3. How to work with mlflow?
+
+- mlflow.set_tag() # data about the developer for example
+- mlflow.log_param() # all kind of parameters or info to be logged
+- mlflow.log_metric() # results/metrics
+
+with mlflow.start_run():
+
+	mlflow.set_tag("developer", "cristian")
+	mlflow.log_param("train-data-path", "./data/green_tripdata_2021-01.csv")
+	mlflow.log_param("train-data-path", "./data/green_tripdata_2021-02.csv") #hyperparameter or other info, in this case i'm logging the data and name 
+
+	alpha = 0.01
+	mlflow.log_param("alpha", alpha)
+	
+
+	lr = Lasso(alpha)
+	lr.fit(X_train, y_train)
+
+	y_pred = lr.predict(X_val)
+
+	rmse = mean_squared_error(y_val, y_pred, squared=False)
+	mlflow.log_metric("rmse", rmse)
+
+	
+===
+
+*The source code is not detected if used in a Jupyter Notebook, so it will not be showed in the mlflow tracking.
+If you use a script it will appear in the source code section!
+
+===========================================================================
+
+EXPERIMENT TRACKING WITH MLFLOW
+
+- Add parameter tuning to notebook
+- Show how it looks in MLFlow
+- Select the best one
+- Autolog
+
+===
+
+with mlflow.start_run():
+
+	mlflow.set_tag("developer", "cristian")
+	mlflow.log_param("train-data-path", "./data/green_tripdata_2021-01.csv")
+	mlflow.log_param("train-data-path", "./data/green_tripdata_2021-02.csv") #hyperparameter or other info, in this case i'm logging the data and name 
+
+	alpha = 0.01
+	mlflow.log_param("alpha", alpha)
+	
+
+	lr = Lasso(alpha)
+	lr.fit(X_train, y_train)
+
+	y_pred = lr.predict(X_val)
+
+	rmse = mean_squared_error(y_val, y_pred, squared=False)
+	mlflow.log_metric("rmse", rmse)
+
+====
+
+Alguns frameworks permitem mlflow.autolog()
+
+Por exemplo, xgboost seria: mlflow.xgboost.autolog()
+
+mlflow.xgboost.autolog()
+
+booster = xgb.train(...params...)
+
+ou
+
+mlflow.<framework>.autolog() # consultar no site!
+
+framework.train()
+
+...
+
+===
+
+# enable autologging
+mlflow.sklearn.autolog()
+
+# prepare training data
+X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+y = np.dot(X, np.array([1, 2])) + 3
+
+# prepare evaluation data
+X_eval = np.array([[3, 3], [3, 4]])
+y_eval = np.dot(X_eval, np.array([1,2])) + 3
+
+# train a model
+model = LinearRegression()
+with mlflow.start_run() as run:
+    model.fit(X, y)
+    metrics = mlflow.sklearn.eval_and_log_metrics(model, X_eval, y_eval, prefix="val_")
+
+====================================================================================
+
+MODEL MANAGEMENT with MLFLOW
+
+mlflow.log_artifact(local_path = "models/ling_reg.bin", artifact_path = "models_pickle/")
+
+--local_path: onde está salvo o modelo 
+-- artifact_path: onde ficará salvo no mlflow
+
+OU
+
+mlflow.log_artifact(<arquivo_do_modelo>, artifact_path="models_pickle/")
+
+
+OU
+
+mlflow.<framework>.log_model(model, artifact_path = "models/")
+
+===
+
+The autolog, logs the model automatically.
+
+mlflow.xgboost.autolog(disable=True) para desativar.
+ 
+===
+
+mlflow.log_params() aceita um dicionario
+
+Ex:
+
+params={
+	"param1":param1,
+	"param2":param2,
+	...
+}
+
+===
+
+# Saving model and preprocessor
+
+with open("models/preprocessor.b","wb") as f_out:
+	pickle.dump(dv, f_out)
+ 
+mlflow.log_model("models/preprocessor.b", artifact_path="preprocessor")
+mlflow.log_model(model, artifact_path="models_mlflow")
+
+===
+
+Predict using MLFLOW importing model as PYFUNC:
+
+import mlflow
+logged_model = "runs/:<see code in mlflow>"
+loaded_model = mlflow.pyfunc.load_model(logged_model)
+
+===
+
+mlflow.log_artifact() only work with PATHS
+mlflow.<framework>.log_model() work with models
+
+========================================================================
+
+Model Registry
+
+"Register Model" in my models folders after enter in the mlflow experiment.
+
+Register Model
+- Create Model
+- Model Name: choose some name, example: nyc-taxi-regressor
+
+We can register another model in the same name, which will be a v2
+
+===
+
+In the Models tab we can see all the registered version models and apply DESCRIPTION or explanation ou tags, etc.
+
+===
+
+We can move the models to staging, dev, production.
+
+- staging -> we will compare the two
+
+===
+
+Using MLFLOW Python API to see the experiments and results (same we did with the UI)
+
+from mlflow.tracking import MlflowClient
+
+MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+
+client = MlflowClient(tracking_uri=MLFLOW_TRACKING_URI)
+
+client.list_experiments()
+
+client.create_experiment(name="my-cool-experiment") # same we did before but using python api
+
+from mlflow.entities import ViewType
+
+runs = client.search_runs(
+	experiment_ids='1', 
+	filter_string="", 
+	run_view_type=ViewType.ACTIVE_ONLY,
+	max_results=5,
+	order_by=["metrics.rmse ASC"]
+)
+
+for run in runs:
+	print("run id: {run.info.run_id}, rmse: {run.data.metrics['rmse']:.4f}")
+
+# Will show the best results from rmse which 
+
+===
+
+runs = client.search_runs(
+	experiment_ids='1', 
+	filter_string="metrics.rmse < 6.8", 
+	run_view_type=ViewType.ACTIVE_ONLY,
+	max_results=5,
+	order_by=["metrics.rmse ASC"]
+)
+
+for run in runs:
+	print("run id: {run.info.run_id}, rmse: {run.data.metrics['rmse']:.4f}")
+
+# Will show the best results from rmse which is lower than 6.8
+
+===
+
+Register/promoting the model
+
+import mlflow
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+run_id = <run_id>
+model_uri = f"runs:/{run_id}/model"
+mlflow.register_model(model_uri=model_uri, name="nyc-taxi-regressor")
+
+# WE DID THE SAME WE DID BEFORE WITH THE MLFLOW API INSTEAD OF THE MLFLOW UI!!!!
+
+===
+
+Transforming the state of model
+
+model_name = 'nyc-taxi-regressor'
+lastest_versions = client.get_latest_versions(name=model_name)
+
+for version in latest_versions:
+	print(f"version: {version.version}, stage={version.current_stage}")
+
+# will show the models 
+
+# Transition the stageS
+version=4
+new_stage = "Staging"
+client.transition_model_version_stage(
+	name= model_name,
+	version=version,
+	stage=new_stage,
+	archive_existing_versions=False,
+)
+
+# Update model version
+
+import datetime
+
+client.update_model_version(
+	name=model_name,
+	version=version,
+	description=f"The model version {version} was transitioned to {new_stage} on {datetime.today().date()}."
+)
+
+====================================================================================
+
+# He created some functions to load dataframe, apply preprocessing and load model and predict: read_dataframe(), preprocess()
+# He will test the data from march (2021-03), so we basically have: 2021-01 as TRAIN, 2021-02 as VALIDATION (hyperparameter tuning) ans 2021-03 as TEST (choose between the models selected for stagging area).
+
+df = read_dataframe(path)
+
+client.download_artifacts(run_id=run_id, path='preprocessor', dst_path='.')
+
+import pickle
+with open('preprocessor/preprocessor.b", "rb") as f_in:
+	dv = pickle.load(f_in)
+
+X_test = preprocess(df, dv)
+
+target = "duration"
+y_test = df[targes].values
+
+# To see the time
+%time test_model(name=model_name, stage='Production', X_test=X_test, y_test)
+%time test_model(name=model_name, stage='Staging', X_test=X_test, y_test)
+
+client.transition_model_version_stage(
+	name=model_name,
+	version=4,
+	stage='Production',
+	archive_existing_versions=True,
+)
+
+
+
