@@ -1,0 +1,393 @@
+Docker  (By ML Engineering Course)
+
+Summary:
+- Save models with pickle
+- Use flask to turn the model into a web service
+- Use dependency and env manager
+- Package it with Docker
+- Deploy to the cloud
+
+5.1 Intro / Session Overview
+
+Steps:
+
+1. Train a model in some platform:
+
+- Jupyter notebook
+- Script
+- In a Cloud service
+
+2. Save the model
+model.bin, model.pkl, model.h5...
+
+3. Create a platform to encapsulate or interact with model
+
+- Flask web app
+
+Churn service -> Model -> Input and Prediction
+
+===
+
+How to build that system?
+
+The system is builded accordly to the layers: 
+
+Environment - System Depences -> Environment for Python Dependencies (Pipenv) -> Webservice (Flask) -> Model
+
+Hierarchy:
+0. Cloud AWS EB / AWS EC2 / Etc
+1. Environment - System Depences 
+2. Environment for Python Dependencies (Pipenv) 
+3. Webservice (Flask) 
+4. Model
+
+====================================================================================
+
+5.2 Saving and loading the model
+- Saving to pickle
+- Loading the model from pickle
+- Turning our notebook into a Python Script
+
+
+### Saving
+
+import pickle
+f_out = open(output_file.bin, 'wb')
+pickle.dump(model, f_out)
+f_out.close()
+
+or
+
+with open(output_file, 'wb') as f_out:
+	pickle.dump(model, f_out)
+
+its possible to extract multiple functions (like vectorizer + model)
+
+
+with open(output_file, 'wb') as f_out:
+	pickle.dump((dv, model), f_out)
+
+
+### Load
+
+with open(model_file, 'rb') as f_in:
+	dv, model = pickle.load(f_in)
+
+====================================================================================
+
+5.3 Web Services: Introduction to Flask
+
+- Writing a simple ping/pong app
+- Querying it with 'curl' and browser
+
+pip install flask
+
+from flask import Flask
+
+app = Flask('ping')
+
+@app.route('/ping', methods=['GET'])
+def ping():
+	return 'PONG'
+
+if __name__ == "__main__":
+	app.run(debug=True, host='0.0.0.0', port=9696)
+
+===
+
+Communicate with web server:
+
+curl http://0.0.0.0:9696/ping
+>> PONG
+
+or
+
+curl http://localhost:9696/ping
+
+or
+
+browser of your choice: http://localhost:9696/ping
+
+====================================================================================
+
+5.4 Serving the churn model with Flask
+
+- Wrapping the predict script into a flask app
+- Querying it with 'requests'
+- Preparing for production: gunicorn
+- Running it on windows with waitress
+
+===
+
+import pickle
+from flask import Flask
+from flask import request
+from flask import jsonify
+
+model_file = 'name_model.bin'
+
+with open(model_file, 'rb') as f_in:
+	vectorizer_function, model = pickle.load(f_in)
+
+app = Flask('churn')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+	customer = request.get_json()
+	X = dv.transform([customer])
+	y_pred = model.predict_proba(X)[0, 1]
+	churn = y_pred >= 0.5
+
+	result = {
+		'churn_probability': float(y_pred),
+		'churn': bool(churn)
+	}
+
+	return jsonify(result)
+
+if __name__ == "__main__":
+	app.run(debug=True, host='0.0.0.0', port=9696)
+
+===
+
+python predict.py
+
+===
+
+import requests
+
+url = 'https://localhost:9696/predict'
+
+customer = {...dict_with_valid_information...}
+
+requests.post(url, json=customer)
+
+>> {'churn':True, 'churn_probability':0.6363584152715288}
+
+===
+
+if response['churn'] == True:
+	print('sending promo email to %s' % ('xyz-123'))
+
+================================
+
+Production server: gunicorn
+
+>> pip install gunicorn
+
+gunicorn run <python_file>:<app_variable>
+
+gunicorn run predict:app
+
+>> gunicorn run --bind 0.0.0.0:9696 predict:app
+
+!!! gunicorn doenst work in plain windows !!!
+
+===
+
+alternative to gunicorn: waitress
+
+pip install waitress
+
+waitress-serve --listen=0.0.0.0:9696 predict:app
+
+====================================================================================
+
+5.5 Dependency and environment management: Pipenv
+
+- Installing pipenv
+- Installing libraries with Pipenv
+- Running things with Pipenv
+
+Virtual Environments:
+- virtual env /venv
+- conda 
+conda create -n <name> python=<version>
+conda activate <name> 
+- pipenv
+- poetry
+
+pip install pipenv
+pipenv install numpy pandas scikit-learn=0.24.2 flask
+pipenv gunicorn
+
+Creates "Pipfile" and "Pipfile.lock"
+- Pipfile
+packages, versions, dev-packages, python version
+- Pipfile.lock
+metadata of packages, hashes of the specific version for reproducibility
+
+In a new computer, with the files we can just digit:
+>> pipenv install 
+
+Inside of the virtual environment (similar to ACTIVATE the environment):
+>> pipenv shell
+
+We can initiate the web
+>> gunicorn --bind 0.0.0.0:9696 predict:app
+
+We can skip the enter in virtual environment step running:
+>> pipenv run [what i want to run]
+>> pipenv run gunicorn --bind 0.0.0.0:9696 predict:app
+
+====================================================================================
+
+5.6 Environment Management: DOCKER
+
+- Running python image with docker
+- Dockerfile
+- Building docker image
+- Running docker image
+
+docker run python:3.8.12-slim
+docker run -it --rm python:3.8.12-slim #acess cli
+
+-it -> iterative shell
+--rm -> will download and remove from system
+
+The standard "entrypoint" for "-it" of the image python:3.8.11-slim is a terminal with python:
+>> import bla... 
+
+We can change that:
+docker run -it --rm --entrypoint=bash python:3.8.11-slim
+
+Now it will open the BASH instead:
+>> apt-get update
+>> ls
+>> mkdir
+>> ls
+>> pwd
+etc
+
+It will only affect the docker environment
+
+>> pip install pipenv
+
+===
+
+How to build a dockerfile
+
+FROM <image> 
+RUN <command_line_commands>
+WORKDIR <name> # creates dir and cd into it
+COPY [...files...] # list of files
+EXPOSE <port>
+ENTRYPOINT <commando_line_commands>
+
+How to build image from dockerfile
+
+>> docker build -t zoomcamp-test .
+>> docker run -it --rm --entrypoint=bash zoocamp-test
+
+# we can install the things using bash for example, but is better just use the dockerfile.
+
+-t: the tag that is associate with the image 
+
+### Dockerfile:
+FROM python:3.8.11-slim
+
+RUN pip install pipenv
+
+WORKDIR /app
+COPY ["Pipfile", "Pipfile.lock", "./"]
+
+RUN pipenv install --system --deploy
+COPY ["predict.py", "model_name.bin", "./"]
+
+EXPOSE 9696
+
+ENTRYPOINT ["gunicorn", "--bind=0.0.0.0:9696", "predict:app"]
+
+===
+
+
+Now we can map the port exposed:
+
+>> docker build -t zoomcamp-test .
+>> docker run -it -p 9696:9696 --rm zoomcamp-test
+
+===
+
+Now we can use python test-script.py OR test the api and it will work!
+
+====================================================================================
+
+5.7 Deployment to the cloud AWS Elastic Beanstalk (optional)
+
+- Installing the eb cli
+- Running eb locally
+- Deploying the model
+
+One way:
+> Create AWS account
+> Create a EC2
+> ssh into it -> ssh <mapped_url> -> ex: ssh zoomcamp-ec2
+> scp the files
+> etc
+
+Another way: AWS Elastic Beanstalk -> With CLI
+>> pipenv install awsebcli --dev
+*--dev will install ONLY for development, it will not be included in the production pipfile.
+
+>> pipenv shell
+>> eb --help
+>> eb init -p docker -r eu-west-1 churn-serving
+>> ls .elasticbeanstalk/config.yml
+>> eb local run --port 9696 
+# test locally before deploying
+
+eb init -p <platform> -r <region> <name_of_service>
+
+# Run in the cloud
+>> eb create churn-serving-env
+
+# Terminate
+>> eb terminate churn-serving-env
+
+It will generate a adress that we can use!!!
+
+So we can use to test:
+
+host = "...adress..."
+url = f'http://{host}/predict'
+
+===
+
+Another way: AWS Elastic Beanstalk -> With the AWS Console
+
+Go to console, upload the zip file and choose python or upload the Dockerfile with the files and deploy!
+
+===
+
+Tutorial for reference:
+https://www.youtube.com/watch?v=4oCjtzxWWJs&ab_channel=JustmeandOpensource
+
+- Create flask or html or etc
+- Create Dockerfile, (Ex: nginx image for html...)
+
+>> aws configure #to verify credentials
+>> eb --version
+>> eb init
+>> eb create # will create with default settings 
+>> eb list
+>> eb status
+
+Just two commands to deploy: eb init and eb create.
+
+How to update application?
+>>eb deploy # create another version
+
+>> eb terminate --force # to delete all the resources EXCEPT the s3 bucket.
+>> eb list
+
+===
+
+Another example:
+https://sommershurbaji.medium.com/deploying-a-docker-container-to-aws-with-elastic-beanstalk-28adfd6e7e95
+
+
+
+
+
+
+
