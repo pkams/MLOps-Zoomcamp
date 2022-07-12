@@ -1,0 +1,61 @@
+MLOps Phases:
+
+Design <-> Train (Experiment Tracking) <-> Operate (Deployment)
+
+Training Pipeline -> Model -> Deploymeny
+
+===
+
+Deployment
+
+- 1. Batch Offline: Run regularly
+- 2. Online: Uprunning all the time
+	- 2.1 Web Service
+	- 2.2 Streaming
+
+
+===
+
+1. Batch Mode
+
+
+- Run the model regularly (hourly, daily, monthly)
+
+Database -> (get all data from yesterday) -> Scoring Job (Model) -> Database (Predictions) -> Dashboard
+
+Uses: Marketing, etc.
+
+Churn (possibilidade do usuário sair do serviço).
+
+Data of yesterday <-> Churn Scoring Job <-> Predictions -> Marketing Job -> Pushes actions
+
+===
+
+2. Web Service
+
+Web Service => Ride Duration Service [Model]
+
+Person -> Backend <-> Ride Duration Service Model 
+
+This models needs to be open all the time.
+
+Decision needs to be done IMMEDIATLY.
+
+Relação 1x1 client-server
+
+Use case: Ride Duration Service Model
+
+===
+
+3. Streaming
+
+Relação 1xN 
+				 -> C1 
+User <-> Backend -> Ride_Started -> C2 (tip prediction)
+				 -> C3 (duration prediction v2.0)	 
+
+Use cases: Person -> Video Streaming -> Copyright -> Streaming -> Remove content
+			   	     -> NSFW
+			   	     -> Violence / Hate Speech
+
+
