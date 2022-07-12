@@ -1,0 +1,192 @@
+> git bash
+> use linux (use VM if possible)
+> create EC2 (or similar in other clouds) > mlops-zoomcamp > Ubuntu > t2.micro (free) > key pair (.pem) > 30gb storage 
+
+===
+
+Put key in the .ssh folder in your user folder.
+
+Use the key to connect with VM:
+
+ssh -i ~/.ssh/razer.pem user@ip
+
+We can create a config file inside the .ssh folder:
+
+Host mlops-zoomcamp
+	HostName <ip>
+	User ubuntu
+	IdentityFile c:/Users/alexe/.ssh/razer.pem
+	StrictHostKeyChecking no
+
+So we can call:
+>> ssh mlops-zoomcamp
+
+=================================================================================
+
+Go to anaconda site and download the linux installer.
+Into the linux line command just do:
+>> wget <link_to_installer>
+
+bash Anaconda3-2021.11-Linux-x86_64.sh
+yes
+
+===
+
+sudo apt update
+sudo apt install docker
+
+===
+
+>> mkdir soft
+>> cd soft/
+*go to github and find docker compose for linux*
+>> wget <link_to_download_docker_compose_for_linux> -O docker-compose
+*-O will set the name
+
+*transform docker-compose into executable* -> chmod +x docker-compose
+
+>> nano .bashrc
+
+export PATH = "${HOME}/soft:${PATH}"
+
+>> source .bashrc
+>> which docker-compose
+>> sudo docker run hello-world
+
+to run without sudo:
+
+>> sudo groupadd docker
+>> sudo usermod -aG docker $USER
+
+===================================================================================
+
+git clone https://github.com/DataTalksClub/mlops-zoomcamp.git
+
+===
+
+connect remote-ssh in vs studio
+
+===
+
+Or use something like mobaxterm?
+
+==
+
+into the remote:
+mkdir notebooks
+cd notebooks
+jupyter notebook
+
+===
+
+in VS studio we can connect using PORTS >> forward a port
+
+port 8888 >> local adress 8888
+
+====================================================================================
+
+How to open data?
+
+new york dataset is now using parquet.
+ 
+>> copy link
+>> cd data
+>> wget <link>
+>> jupyter notebook
+
+import pandas as pd
+
+pd.read_parquet('.data/green_tripdata_2021-01-parquet')
+
+!pip install pyarrow
+
+====================================================================================
+
+How to train the model? 
+See notebook in: https://github.com/DataTalksClub/mlops-zoomcamp/blob/main/01-intro/duration-prediction.ipynb
+
+====================================================================================
+
+First module: Log Tracking / Model Registry
+
+===
+
+Course Overview:
+
+- Mlflow -> Model tracking, etc
+
+- Prefetch -> ML Pipelines 
+ML Pipeline: Load and prepare data -> Vectorize -> Train Model
+>> python pipeline.py --train-data <...> --validation-data <...>
+
+- Deployment of ML models
+Kubeflow pipelines for example
+
+
+- Serving model
+Batch x Online
+
+- Data drift
+Model monitoring...
+Data drift
+
+- Best practices
+Automatization, refining pipeline, etc
+
+- Processes
+ML Canvas
+CRIPS-DM
+MLOPS Stack Canvas
+Etc
+
+====================================================================================
+
+MLOPS Maturity Model
+5 levels
+
+0 -> No Mlops at all
+5 -> Full automation
+
+0. No Mlops: 
+- No automation 
+- All code in jupyter
+OK: POC
+
+1. Devops, no MLOPS
+- Releases are automated 
+- Unit and integration tests
+- CI/CD
+- Ops metrics
+
+- No experiment track
+- No reproducibility
+- DS separated from engineers
+OK: POC -> Production
+
+2. Automated training
+- Training pipeline
+- Experiment training
+- Model registry
+
+- Low friction deployment
+- DS work with Eng.
+OK: 2-3+ ML Cases
+
+3. Automated Deployment
+- Easy to deploy model
+- A/B Test
+- Model monitoring
+OK: 5-6+ ML Cases
+
+data prep -> train model -> deploy model  -> model v1 x model v2
+ 
+4. Full MLOPS Automation
+- Automatic training, tracking and monitor, deploy.
+
+===
+
+Level 3 and 4 is used only when necessary, a good level 2 project is enough in most cases!
+
+The course will cover kwnoledge to build a level 2 to level 3 project.
+
+
