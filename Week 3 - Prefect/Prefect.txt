@@ -1,0 +1,179 @@
+Link with good examples: 
+https://towardsdatascience.com/orchestrate-a-data-science-project-in-python-with-prefect-e69c61a49074
+
+===
+
+Prefect
+
+- What is Negative Engineering?
+- What is Workflow Orchestration?
+
+===
+
+Set os tools that we can schedule and manage pipeline.
+
+Example of ML Pipeline:
+- PostgresSQL -> parquet -> REST API -> Pandas -> MLFlow / ScikitLearn -> Flask
+
+Example of DataViz Pipeline:
+- PostgresSQL -> parquet -> pandas -> another PostgresSQL -> Tableau
+
+===
+
+Negative Engineering
+90% of engineering time spent
+- Retries when APIs go down
+- Malformed data
+- Notifications
+- Observability into Failure
+- Conditional Failure Logic
+- Timeouts
+
+=================================================================================
+
+2. Introducing Prefect
+
+Eliminating Negative Engineering
+- Opensource workflow orchestration
+- Python-based
+- Modern data stack
+- Native Dask Integration
+- Very active community
+- Prefect Cloud/Prefect Server
+- Prefect Orion (Prefect 2.0)
+
+Prefect Core (1.0)
+Prefect Orion (2.0)
+
+===
+
+Embracing dynamic DAG-free workflows
+Transparent and Observable orchestration rules
+
+from prefect import flow, task
+
+@task(retries=3)
+def get_something(input):
+	<do_something>
+
+@flow(name='My Flow')
+def my_flow_function(inputs):
+	for input in inputs:
+		get_something(input)
+	
+
+# run the flow!
+my_flow_function([input1, input2])
+
+===
+
+pip install prefect==2.0b5 (stable version we are using in the course)
+
+prefect orion start (#start UI server)
+
+===
+
+(extra command he used because configurations, we dont need to do that)
+prefect config view
+prefect config unset PREFECT_ORION_UI_API_URL
+
+===
+
+@flow(flow_runner=ConcurrentTaskRunner()) -> the default setting, prefect will try to optimize the flow, making the independent functions running as concurrent functions.
+
+import prefect.taks_runners import SequentialTaskRunner
+
+@flow(flow_runner=SequentialTaskRunner()) -> Make sequencial 
+
+===
+
+Parameters 
+
+===
+
+4. Deploy Prefect Orion Server
+
+- Open port on AWS VM
+- Install PRefect on VM
+- Configure Prefect to server as remote host
+- Start PRefect Orion
+- View it from local Browser
+
+# Create EC2 instance
+# Add security group rules 
+HTTP >> Anywhere
+Custom TCP >> 4200 >> Anywhere
+Custom UDP >> 4200 >> Anywhere
+HTTPS... (não sei se precisa)
+
+# ssh to public id (use the key)
+# ssh -i ~/Work/prefect.pem <name>@<ip>
+
+# install conda
+# pip install prefect
+
+# Configure the prefect server (follow instructions)
+https://discourse.prefect.io/t/hosting-an-orion-instance-on-a-cloud-vm/967
+# external ip is the ip of the VM
+# prefect config view to verify if is setted
+# if needed to change prefect config unset
+
+# prefect orion start -- host 0.0.0.0
+
+# <ip>:4200 no navegador!
+
+# Set the endpoint in the local machine
+Exemplo: prefect config set PREFECT_API_URL='http://3.1.7.74.178:4200/api"
+
+===
+
+We can use prefect cloud as alternative.
+
+====================================================================================
+
+5. Deployment of Prefect Flow
+
+>> prefect storage ls
+>> prefect storage create
+>> 3 (local storage)
+>> path: /Users/myname/.prefect
+
+in the code we will write deployment 
+
+from prefect.deployments import DeploymentSpec
+from prefect.orion.schemas.schedules import IntervalSchedule
+from prefect.flow_runner import SubprocessFlowRunner
+from datetime import timedelta
+
+DeploymentSpec(
+	flow=main,
+	name='model-training',
+	schedule=IntervalSchedule(interval=timedelta(minutes=5)),
+	flow_runner=SubprocessFlowRunner(),
+	tags=['ml']
+)
+
+>> prefect deployment create prefect_deploy.py
+
+===
+
+Go to the prefect orion (VM) and find WORK QUEUES
+
+Create work queue >> name: global >> create (it will return a ID)
+
+in local >> prefect work-queue preview <id>
+
+# will show all the scheduled works
+
+>> prefect agent start <id of a work> # will start manually the work
+
+
+
+
+
+
+
+
+
+
+
